@@ -3,17 +3,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 class Transformer(nn.Module):
-    def __init__(self, encoder, decoder):
+    def __init__(self, src_embed, tgt_embed, encoder, decoder, generator):
         super(Transformer, self).__init__()
+        self.src_embed = src_embed
+        self.tgt_embed = tgt_embed
         self.encoder = encoder
         self.decoder = decoder
+        #decoder로 만들어진 embedding을 기반으로 자연스러운 문장 창조
+        self.generator = generator
 
     def encode(self, src, src_mask):
-        out = self.encoder(src, src_mask)
+        out = self.encoder(self.src_embed(src), src_mask)
         return out
     
-    def decode(self, tgt, encoder_out, tgt_mask):
-        out = self.decoder(tgt, encoder_out, tgt_mask)
+    def decode(self, tgt, encoder_out, tgt_mask, src_tgt_mask):
+        out = self.decoder(self.src_embed(tgt), encoder_out, tgt_mask, src_tgt_mask)
         return out
     
     def forward(self, src, tgt, src_mask):
@@ -21,8 +25,10 @@ class Transformer(nn.Module):
         tgt_mask = self.make_tgt_mask(tgt)
         src_tgt_mask = self.make_src_tgt_mask(src, tgt)
         encoder_out = self.encode(src, src_mask)
-        y = self.decode(tgt, encoder_out, tgt_mask, src_tgt_mask)
-        return y
+        decoder_out = self.decode(tgt, encoder_out, tgt_mask, src_tgt_mask)
+        out = self.generator(decoder_out)
+        out = F.log_softmax(out, dim=-1)
+        return out, decoder_out
     
     def make_pad_mask(self, Q, K, pad_idx = 1):
         query_seq_len, key_seq_len = Q.size(1), K.size(1)
