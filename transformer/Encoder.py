@@ -4,10 +4,9 @@ from layers import *
 class Encoder(nn.Module):
     def __init__(self, encoder_layer, n_layer):
         super(Encoder, self).__init__()
-        self.layers = []
-        for i in range(n_layer):
-            self.layers.append(copy.deepcopy(encoder_layer))
-
+        self.n_layer = n_layer
+        self.layers = nn.ModuleList([copy.deepcopy(encoder_layer) for _ in range(self.n_layer)])
+        
     def forward(self, src, src_mask):
         out = src
         for layer in self.layer:

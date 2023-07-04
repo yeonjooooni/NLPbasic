@@ -17,7 +17,7 @@ class MultiHeadAttentionLayer(nn.Module):
         self.v_fc = copy.deepcopy(qkv_fc)
         self.out_fc = out_fc
 
-    def forward(self, *args, Q, K, V, mask=None):
+    def forward(self, Q, K, V, mask=None):
         n_batch = Q.size(0)
         #mainly described in 3.2.2
         def transform(x, fc):
